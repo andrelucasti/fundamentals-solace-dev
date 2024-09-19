@@ -35,7 +35,7 @@ class PubSubPlusBroker {
     /******************************************/
 
     //standard init
-    const factoryProps = new solace.SolclientFactoryProperties();
+    var factoryProps = new solace.SolclientFactoryProperties();
     factoryProps.profile = solace.SolclientFactoryProfiles.version10;
     solace.SolclientFactory.init(factoryProps);
 
@@ -43,7 +43,7 @@ class PubSubPlusBroker {
     solace.SolclientFactory.setLogLevel(solace.LogLevel.DEBUG);
   }
 
-  
+
 
   /**
    * * Uses a Solace PubSub+ topic to authenticate against a backend RESTful
@@ -147,8 +147,7 @@ class PubSubPlusBroker {
       /*We create a message object, provide it with a destination, and
        *establish the delivery mode. After this, we assign our text message (the "body")
        *to said object*/
-
-      const message = solace.SolclientFactory.createMessage();
+      var message = solace.SolclientFactory.createMessage();
       message.setDestination(solace.SolclientFactory.createTopicDestination(this.sPublishTopic));
       message.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
       message.setBinaryAttachment(sBody);
@@ -198,9 +197,12 @@ class PubSubPlusBroker {
          *-CorrelationKey that is used in events
          *-How long to block the execution thread, in milliseconds
          */
-        // const topic = solace.SolclientFactory.createTopicDestination(this.sSubscribeTopic);
-        // this.broker.session.subscribe(topic, this.GENERATE_SUBSCRIBE_EVENT, "myCorrelationKey", this.BLOCK_SUBSCRIBER_TIMEOUT_MS);
-        
+        this.broker.session.subscribe(
+          solace.SolclientFactory.createTopic(this.sSubscribeTopic),
+          this.GENERATE_SUBSCRIBE_EVENT,
+          this.sSubscribeTopic,
+          this.BLOCK_SUBSCRIBER_TIMEOUT_MS
+        );
       } catch (error) {
         console.error("Could not subscribe to topic. ->" + error.message);
       }
@@ -226,33 +228,6 @@ class PubSubPlusBroker {
   }
 
 
-
-
-  /**
-   * Returns the message received from a topic subscription.
-   * @callback oResultCallback
-   *
-   * @param {oResultCallback} oResultCallback - Callback function used to handle the result
-   */
-  onTopicMessage(oResultCallback) {
-
-    /*
-     *Rescope our callback so we can use it
-     *inside our event handler lambda, below.
-     */
-    var oResultCallback = oResultCallback;
-
-    //register a lambda for when we receive a message.
-    this.broker.session.on(solace.SessionEventCode.MESSAGE, (sMessage) => {
-
-      //assign the message to our callback for use by the caller.
-      //We dump a more detailed format of the message to the debug log
-      oResultCallback(sMessage.getBinaryAttachment());
-      console.debug(sMessage.dump());
-    });
-  }
-
-
   /**
    * Consumes from a given queue on the broker
    * @callback oResultCallback
@@ -261,25 +236,25 @@ class PubSubPlusBroker {
    * @returns Nothing
    */
   consume(oResultCallback) {
-    if(this.broker.session === null){
-        oResultCallback(false, "No session! You're probably not connected to the broker.");
-    } else {
-      /*This block establishes our consumer.
-      *We defer actually recieving the message to the event
-      *handler designated for that purpose.
-      */
-      this.messageConsumer = this.broker.session.createMessageConsumer({
-        queueDescriptor: {
-          name: this.sReceiveQueue,
-          type: solace.QueueType.QUEUE,
-        },
-        acknowledgeMode: solace.MessageConsumerAcknowledgeMode.AUTO,
-      });
 
-      try{
-        this.messageConsumer.connect();
-      } catch (error){
-        console.error("Could not consume from queue. ->" + error.message);
+    //ensure that we have a session to play with
+    if (this.broker.session === null) {
+      oResultCallback(false, "No session! You're probably not connected to the broker.");
+    } else {
+
+      /*This block establishes our consumer.
+       *We defer actually recieving the message to the event
+       *handler designated for that purpose.
+       */
+      this.messageConsumer = this.broker.session.createMessageConsumer({
+        // solace.MessageConsumerProperties
+
+        //enable auto-acknowledgement so that messages are read off the queue immediately
+      });
+      try {
+        
+      } catch (error) {
+        console.error("Could not connect to queue. ->" + error.message);
       }
     }
 
@@ -287,22 +262,22 @@ class PubSubPlusBroker {
      *Rescope our callback and topic so we can use them
      *inside our event handler lambda, below.
      */
-
-
     var oResultCallback = oResultCallback;
     var sQueue = this.sReceiveQueue;
 
     //What to do when subscription succeeds
     this.messageConsumer.on(solace.MessageConsumerEventName.UP, () => {
-      oResultCallback(true, "Successfully consumed from " + sQueue);
-      console.debug("Successfully consumed from " + sQueue);
+      oResultCallback(true, "Successfully connected to " + sQueue);
+      console.debug("Successfully connected to " + sQueue);
     });
 
     //What to do when a sub fails
     this.messageConsumer.on(solace.MessageConsumerEventName.CONNECT_FAILED_ERROR, () => {
-      oResultCallback(false, "Could not consume from " + sQueue);
+      oResultCallback(false, "Could not subscribe to " + sQueue);
+      console.debug("Failed to connect to " + sQueue);
     });
   }
+
 
   /**
    * Returns the message received from a topic subscription.
@@ -328,17 +303,30 @@ class PubSubPlusBroker {
     });
   }
 
+
+  /**
+   * Consumes messages from a queue and returns them to the caller using
+   * the provided callback function.
+   *
+   * @callback oResultCallback
+   *
+   * @param {oResultCallback} oResultCallback - Callback function used to handle the result
+   */
   onQueueMessage(oResultCallback) {
 
+    //rescope our callback for use in the lambda
     var oResultCallback = oResultCallback;
-    console.debug(this.messageConsumer)
+
+    console.debug(this.messageConsumer);
 
     //register a lambda for when we receive a message.
     this.messageConsumer.on(solace.MessageConsumerEventName.MESSAGE, (sMessage) => {
 
+      //assign the message to our callback for use by the caller.
+      //We dump a more detailed format of the message to the debug log
       oResultCallback(sMessage.getBinaryAttachment());
       console.debug(sMessage.dump());
-    })
+    });
   }
 
 } //End class

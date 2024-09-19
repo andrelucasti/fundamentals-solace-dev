@@ -36,8 +36,7 @@ $(document).ready(function() {
     alertHandler(bResult, sMessage);
     if (bResult) {
       //we connected fine, now try and subscribe
-      broker.consume(alertHandler);
-      broker.onQueueMessage(messageHandler);
+      broker.subscribe(alertHandler);
     }
 
     return;
@@ -54,11 +53,11 @@ $(document).ready(function() {
   $('#chatInput').keypress(function (e) {
     var key = e.which;
     if(key == 13)  // the enter key code
-     {
-       $('#buttonSend').click();
-       return false;  
-     }
-   });   
+    {
+      $('#buttonSend').click();
+      return false;
+    }
+  });
 
   /***EVENT HANDLERS***/
   /*
@@ -90,9 +89,12 @@ $(document).ready(function() {
 
 
   //get an instance of our broker
-  const broker = new PubSubPlusBroker();
+  var broker = new PubSubPlusBroker();
 
   //try to connect
   broker.connect(connectHandler);
+
+  //register our callback for when we have a topic message
+  broker.onTopicMessage(messageHandler);
 
 }) //end ready

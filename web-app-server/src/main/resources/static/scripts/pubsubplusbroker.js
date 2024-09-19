@@ -197,12 +197,13 @@ class PubSubPlusBroker {
          *-CorrelationKey that is used in events
          *-How long to block the execution thread, in milliseconds
          */
-        this.broker.session.subscribe(
-          solace.SolclientFactory.createTopic(this.sSubscribeTopic),
-          this.GENERATE_SUBSCRIBE_EVENT,
-          this.sSubscribeTopic,
-          this.BLOCK_SUBSCRIBER_TIMEOUT_MS
-        );
+
+        // this.broker.session.subscribe(
+        //   solace.SolclientFactory.createTopic(this.sSubscribeTopic),
+        //   this.GENERATE_SUBSCRIBE_EVENT,
+        //   this.sSubscribeTopic,
+        //   this.BLOCK_SUBSCRIBER_TIMEOUT_MS
+        // );
       } catch (error) {
         console.error("Could not subscribe to topic. ->" + error.message);
       }
@@ -246,13 +247,19 @@ class PubSubPlusBroker {
        *We defer actually recieving the message to the event
        *handler designated for that purpose.
        */
+      const queue = {
+        name: this.sReceiveQueue,
+        type: solace.QueueType.QUEUE,
+      }
+
       this.messageConsumer = this.broker.session.createMessageConsumer({
         // solace.MessageConsumerProperties
-
+        queueDescriptor: queue,
         //enable auto-acknowledgement so that messages are read off the queue immediately
+        acknowledgeMode: solace.MessageConsumerAcknowledgeMode.AUTO,
       });
       try {
-        
+        this.messageConsumer.connect();
       } catch (error) {
         console.error("Could not connect to queue. ->" + error.message);
       }

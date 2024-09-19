@@ -37,6 +37,9 @@ $(document).ready(function() {
     if (bResult) {
       //we connected fine, now try and subscribe
       broker.subscribe(alertHandler);
+
+      broker.consume(alertHandler);
+      broker.onQueueMessage(messageHandler);
     }
 
     return;
@@ -89,12 +92,9 @@ $(document).ready(function() {
 
 
   //get an instance of our broker
-  var broker = new PubSubPlusBroker();
+  const broker = new PubSubPlusBroker();
 
   //try to connect
   broker.connect(connectHandler);
-
-  //register our callback for when we have a topic message
-  broker.onTopicMessage(messageHandler);
 
 }) //end ready

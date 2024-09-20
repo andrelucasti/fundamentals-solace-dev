@@ -19,6 +19,7 @@ import java.util.Base64;
 public class SolaceCloudProxy {
 
     public record SolaceUserLogin(String username, String password) { }
+    public record AuthResponse(boolean isAuthenticated) { }
 
     private final String host;
     private final String username;
@@ -42,18 +43,22 @@ public class SolaceCloudProxy {
             var authHeader = "Basic " + new String(encode);
             set("Authorization", authHeader);
             set("Content-Type", "application/json");
+            set("Solace-Reply-Wait-Time-In-ms", "3000");
         }};
     }
-
 
 
     @PostMapping("/solace/cloud/proxy")
     @ResponseBody
     public ResponseEntity<Void> login(@RequestBody SolaceUserLogin user) {
-        var request = new HttpEntity<>(user, httpHeaders);
 
+        var request = new HttpEntity<>(user, httpHeaders);
         var restTemplate = new RestTemplate();
-        restTemplate.postForObject(host + "/LOGIN/MSG/REQUEST", request, String.class);
+        var authResponse = restTemplate.postForObject(host + "/LOGIN/MSG/REQUEST", request, AuthResponse.class);
+
+        if (authResponse == null || !authResponse.isAuthenticated()) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

@@ -33,6 +33,8 @@ bin
 src/main/resources/static/lib/
 src/main/resources/static/resources/application-properties.js
 src/main/resources/application.properties
+src/main/resources/application.yml
 */src/main/resources/static/lib/
 */src/main/resources/static/resources/application-properties.js
 */src/main/resources/application.properties
+*/src/main/resources/application.yml

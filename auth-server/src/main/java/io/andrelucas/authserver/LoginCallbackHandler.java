@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-public class LoginCallback implements JCSMPStreamingPublishEventHandler {
+public class LoginCallbackHandler implements JCSMPStreamingPublishEventHandler {
     @Override
     public void responseReceived(String messageID) {
         System.out.println("Response received for message: " + messageID);

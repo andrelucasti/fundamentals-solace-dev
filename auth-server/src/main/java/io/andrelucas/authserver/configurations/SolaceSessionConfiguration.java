@@ -1,4 +1,4 @@
-package io.andrelucas.authserver;
+package io.andrelucas.authserver.configurations;
 
 import com.solacesystems.jcsmp.*;
 import org.springframework.beans.factory.annotation.Value;

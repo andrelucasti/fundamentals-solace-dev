@@ -2,6 +2,8 @@ package io.andrelucas.authserver;
 
 import com.google.gson.Gson;
 import com.solacesystems.jcsmp.*;
+import io.andrelucas.authserver.auth_user.AuthResponse;
+import io.andrelucas.authserver.auth_user.IUserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;

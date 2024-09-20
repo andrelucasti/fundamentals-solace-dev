@@ -1,4 +1,4 @@
-package io.andrelucas.authserver;
+package io.andrelucas.authserver.auth_user;
 
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package io.andrelucas.authserver;
+package io.andrelucas.authserver.auth_user;
 
 public record AuthResponse(boolean isAuthenticated) {
 
